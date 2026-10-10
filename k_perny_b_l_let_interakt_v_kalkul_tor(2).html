@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="hu" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Képernyőből Élet - Életmód & Potenciál Kalkulátor</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        warm: {
+                            50: '#fdfbf7',
+                            100: '#f7f2e9',
+                            200: '#eee3d3',
+                            800: '#433d35',
+                            900: '#2b2620',
+                        },
+                        emerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        coral: {
+                            400: '#ff8a75',
+                            500: '#ff6b52',
+                            600: '#e14f37',
+                        },
+                        teal: {
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fcfaf6;
+            color: #1f2937;
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(255, 107, 82, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 30%, rgba(20, 184, 166, 0.06) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(243, 244, 246, 1);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(16, 185, 129, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.12);
+        }
+
+        .gradient-text-emerald {
+            background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0284c7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-text-warm {
+            background: linear-gradient(135deg, #e14f37 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            background: #e5e7eb;
+            border-radius: 9999px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #059669;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -7px;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+            border: 3px solid #ffffff;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #047857;
+        }
+
+        @media print {
+            body { background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            .glass-panel, .glass-card { background: none !important; border: 1px solid #ccc !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased">
+
+<header class="border-b border-warm-200/80 sticky top-0 z-50 glass-panel shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="p-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-md shadow-emerald-500/20 text-white">
+                <i data-lucide="sun" class="w-6 h-6 animate-spin-slow"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-xl tracking-tight text-gray-900 flex items-center gap-2">
+                    Képernyőből <span class="gradient-text-emerald">Élet</span>
+                </h1>
+                <p class="text-xs text-gray-500 hidden sm:block font-medium">Töltsd meg tartalommal a mindennapjaidat</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button onclick="copySummaryText()" class="px-3.5 py-2 text-xs sm:text-sm font-semibold text-gray-700 hover:text-gray-900 bg-warm-100 hover:bg-warm-200 rounded-xl border border-warm-200 transition flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="copy" class="w-4 h-4 text-emerald-600"></i>
+                <span class="hidden sm:inline">Összegzés Másolása</span>
+            </button>
+            <button onclick="window.print()" class="px-3.5 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center gap-1.5">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Nyomtatás</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full space-y-8">
+
+    <!-- Hero Banner -->
+    <section class="glass-panel rounded-3xl p-6 sm:p-10 relative overflow-hidden shadow-sm border border-emerald-100">
+        <div class="absolute -right-12 -top-12 w-64 h-64 bg-emerald-100 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute right-1/3 -bottom-12 w-48 h-48 bg-coral-400/10 rounded-full blur-2xl pointer-events-none"></div>
+        
+        <div class="max-w-3xl relative z-10 space-y-3">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-500"></i> Pozitív Életmód Váltó Kalkulátor
+            </div>
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-snug">
+                Fedd fel a rejtett idődet és alakítsd át <span class="gradient-text-emerald">valódi sikerekké!</span>
+            </h2>
+            <p class="text-gray-600 text-sm sm:text-base leading-relaxed">
+                Tudd meg, hány új nyelvet beszélhetsz, hány könyvet olvashatsz el, vagy milyen karriermérföldköveket érhetsz el azzal, ha a céltalan telefonozást önfejlesztésre cseréled!
+            </p>
+        </div>
+    </section>
+
+    <!-- Main Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- LEFT PANEL: Controls (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Controls Card -->
+            <div class="glass-panel rounded-3xl p-6 space-y-6 shadow-sm border border-warm-200">
+                <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
+                    <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+                        <i data-lucide="sliders" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-base">1. Saját Adataid</h3>
+                        <p class="text-xs text-gray-500">Állítsd be az életkorod és a képernyőidőd</p>
+                    </div>
+                </div>
+
+                <!-- Age Input -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label for="input-age" class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
+                            Jelenlegi Életkorod:
+                        </label>
+                        <span id="display-age" class="text-base font-extrabold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">28 év</span>
+                    </div>
+                    <input type="range" id="input-age" min="12" max="75" value="28" class="w-full">
+                    
+                    <!-- Age Presets -->
+                    <div class="grid grid-cols-4 gap-1.5 pt-1">
+                        <button onclick="setAge(17)" class="text-xs py-1.5 font-semibold rounded-xl bg-warm-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 border border-warm-200 transition">14-18</button>
+                        <button onclick="setAge(25)" class="text-xs py-1.5 font-semibold rounded-xl bg-warm-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 border border-warm-200 transition">19-28</button>
+                        <button onclick="setAge(35)" class="text-xs py-1.5 font-semibold rounded-xl bg-warm-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 border border-warm-200 transition">29-42</button>
+                        <button onclick="setAge(50)" class="text-xs py-1.5 font-semibold rounded-xl bg-warm-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 border border-warm-200 transition">43-60</button>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                <!-- Screen Time Input -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label for="input-screentime" class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="smartphone" class="w-4 h-4 text-coral-500"></i>
+                            Napi Céltalan Telefonozás:
+                        </label>
+                        <span id="display-screentime" class="text-base font-extrabold text-coral-600 bg-coral-400/10 px-3 py-1 rounded-xl border border-coral-400/20">3.5 óra</span>
+                    </div>
+                    <input type="range" id="input-screentime" min="0.5" max="8" step="0.5" value="3.5" class="w-full">
+                    
+                    <!-- Presets -->
+                    <div class="grid grid-cols-3 gap-2 text-center pt-1">
+                        <button onclick="setScreenTime(1.5)" class="text-xs p-2 rounded-xl bg-warm-100 hover:bg-warm-200 text-gray-700 border border-warm-200 transition">
+                            <span class="block font-bold">1.5 óra</span>
+                            <span class="text-[10px] text-gray-500">Mérsékelt</span>
+                        </button>
+                        <button onclick="setScreenTime(3.5)" class="text-xs p-2 rounded-xl bg-warm-100 hover:bg-warm-200 text-gray-700 border border-warm-200 transition">
+                            <span class="block font-bold">3.5 óra</span>
+                            <span class="text-[10px] text-gray-500">Átlagos</span>
+                        </button>
+                        <button onclick="setScreenTime(5.5)" class="text-xs p-2 rounded-xl bg-warm-100 hover:bg-warm-200 text-gray-700 border border-warm-200 transition">
+                            <span class="block font-bold">5.5 óra</span>
+                            <span class="text-[10px] text-gray-500">Magas</span>
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                <!-- Allocation Rate -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label for="input-conversion" class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="target" class="w-4 h-4 text-teal-600"></i>
+                            Átirányítandó Arány:
+                        </label>
+                        <span id="display-conversion" class="text-base font-extrabold text-teal-700 bg-teal-50 px-3 py-1 rounded-xl border border-teal-200">80%</span>
+                    </div>
+                    <input type="range" id="input-conversion" min="20" max="100" step="10" value="80" class="w-full">
+                    <p class="text-xs text-gray-500 italic">Megtarthatsz 20%-ot a tiszta pihenésre és kikapcsolódásra passes formában.</p>
+                </div>
+            </div>
+
+            <!-- Time Horizon Selection -->
+            <div class="glass-panel rounded-3xl p-6 space-y-4 shadow-sm border border-warm-200">
+                <div class="flex items-center gap-3 border-b border-gray-100 pb-3">
+                    <div class="p-2.5 bg-teal-50 text-teal-600 rounded-2xl border border-teal-100">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-base">2. Tervezett Időtáv</h3>
+                        <p class="text-xs text-gray-500">Válaszd ki a viszonyítási időszakot</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5" id="horizon-button-group">
+                    <button onclick="setTimeHorizon('1')" data-years="1" class="horizon-btn active p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/60 text-emerald-900 font-bold text-sm text-left flex justify-between items-center transition shadow-sm">
+                        <span>1 Év</span>
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                    </button>
+                    <button onclick="setTimeHorizon('2')" data-years="2" class="horizon-btn p-3 rounded-2xl border border-gray-200 bg-white hover:bg-warm-100 text-gray-700 font-bold text-sm text-left flex justify-between items-center transition">
+                        <span>2 Év</span>
+                    </button>
+                    <button onclick="setTimeHorizon('5')" data-years="5" class="horizon-btn p-3 rounded-2xl border border-gray-200 bg-white hover:bg-warm-100 text-gray-700 font-bold text-sm text-left flex justify-between items-center transition">
+                        <span>5 Év</span>
+                    </button>
+                    <button onclick="setTimeHorizon('10')" data-years="10" class="horizon-btn p-3 rounded-2xl border border-gray-200 bg-white hover:bg-warm-100 text-gray-700 font-bold text-sm text-left flex justify-between items-center transition">
+                        <span>10 Év</span>
+                    </button>
+                    <button onclick="setTimeHorizon('retire')" data-years="retire" class="horizon-btn col-span-2 p-3.5 rounded-2xl border border-gray-200 bg-white hover:bg-warm-100 text-gray-700 font-bold text-sm text-left flex justify-between items-center transition">
+                        <div>
+                            <span class="block font-bold">Nyugdíjig Hátralévő Idő</span>
+                            <span id="retire-years-label" class="block text-xs font-medium text-gray-500">65 éves korig (37 év)</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Insight Reality Check Box -->
+            <div class="glass-panel rounded-3xl p-6 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-200/60 space-y-3">
+                <div class="flex items-center gap-2 text-amber-800 font-bold text-sm">
+                    <i data-lucide="compass" class="w-5 h-5 text-amber-600"></i>
+                    Ébren Töltött Idő Mérlege
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-semibold text-gray-700">
+                        <span>Ébren töltött életedből görgetésre fordítva:</span>
+                        <span id="stat-waking-percent" class="font-extrabold text-coral-600">21.8%</span>
+                    </div>
+                    <div class="w-full bg-gray-200/80 rounded-full h-3 overflow-hidden">
+                        <div id="bar-waking-percent" class="bg-gradient-to-r from-amber-500 to-coral-500 h-full rounded-full transition-all duration-500" style="width: 21.8%"></div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-white/80 rounded-2xl border border-amber-200/50 text-xs space-y-1 text-gray-700">
+                    <p>A kiválasztott <span id="stat-years-text" class="font-bold text-gray-900">1 év</span> alatt:</p>
+                    <p class="text-sm font-extrabold text-gray-900">
+                        ⏱️ <span id="stat-total-hours" class="text-coral-600">1 277</span> óra képernyőidő
+                    </p>
+                    <p class="text-gray-500">
+                        Ez <span id="stat-full-days" class="font-bold text-gray-800">53</span> teljes, 24 órás egybefüggő napnak felel meg!
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL: Dashboard & Personal Written Summary (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+
+            <!-- Dynamic Written Narrative Summary Box -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 via-white to-warm-50 space-y-5 shadow-sm">
+                <div class="flex items-center justify-between border-b border-emerald-100 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-emerald-600 text-white rounded-2xl shadow-md shadow-emerald-600/20">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-gray-900 text-lg">Személyes Életmód Narratíva</h3>
+                            <p class="text-xs text-emerald-800 font-medium">A megadott adataid alapján készített elemzés</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold border border-emerald-200">
+                        Inspiráló Áttekintés
+                    </span>
+                </div>
+
+                <!-- Written Narrative Content -->
+                <div id="narrative-content" class="space-y-4 text-sm text-gray-700 leading-relaxed font-normal">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- Action Steps -->
+                <div class="pt-4 border-t border-emerald-100 space-y-3">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+                        Gyakorlati Lépések a Változáshoz (Micro-habits)
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                        <div class="p-3 bg-white rounded-2xl border border-emerald-100 shadow-sm space-y-1">
+                            <span class="font-bold text-emerald-700 block">1. Képernyőmentes Reggel</span>
+                            <span class="text-gray-500 block">Ébredés után az első 30 percben ne nyúlj a telefonodhoz.</span>
+                        </div>
+                        <div class="p-3 bg-white rounded-2xl border border-emerald-100 shadow-sm space-y-1">
+                            <span class="font-bold text-emerald-700 block">2. Helyettesítő Könyv</span>
+                            <span class="text-gray-500 block">Tarts mindig egy könyvet vagy e-könyvet a kezed ügyében.</span>
+                        </div>
+                        <div class="p-3 bg-white rounded-2xl border border-emerald-100 shadow-sm space-y-1">
+                            <span class="font-bold text-emerald-700 block">3. Zónák Kijelölése</span>
+                            <span class="text-gray-500 block">Az étkezőasztal és a hálószoba legyen kütyümentes övezet.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Metrics Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div class="glass-card p-4 rounded-2xl border-l-4 border-l-emerald-500">
+                    <p class="text-xs text-gray-500 font-semibold">Hasznosítható Órák</p>
+                    <p id="kpi-useful-hours" class="text-2xl font-extrabold text-gray-900 mt-1">1 022 óra</p>
+                    <p class="text-[11px] text-emerald-600 font-bold mt-0.5">önfejlesztésre fordítható</p>
+                </div>
+                <div class="glass-card p-4 rounded-2xl border-l-4 border-l-teal-500">
+                    <p class="text-xs text-gray-500 font-semibold">Karrier Elsajátítás</p>
+                    <p id="kpi-skills-count" class="text-2xl font-extrabold text-gray-900 mt-1">1.0 Szakma</p>
+                    <p class="text-[11px] text-teal-600 font-bold mt-0.5">~1000 óra fókuszált tanulás</p>
+                </div>
+                <div class="glass-card p-4 rounded-2xl border-l-4 border-l-coral-500 col-span-2 sm:col-span-1">
+                    <p class="text-xs text-gray-500 font-semibold">Elolvasható Könyvek</p>
+                    <p id="kpi-books-count" class="text-2xl font-extrabold text-gray-900 mt-1">51 könyv</p>
+                    <p class="text-[11px] text-coral-600 font-bold mt-0.5">átlagos terjedelmű szakkönyv</p>
+                </div>
+            </div>
+
+            <!-- Achievement Cards Grid -->
+            <div class="glass-panel rounded-3xl p-6 space-y-5 shadow-sm border border-warm-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-4">
+                    <div>
+                        <h3 class="text-lg font-extrabold text-gray-900 flex items-center gap-2">
+                            <i data-lucide="award" class="w-5 h-5 text-amber-500"></i>
+                            Elérhető Eredmények Ezen Időtáv Alatt
+                        </h3>
+                        <p class="text-xs text-gray-500">Lásd, mennyi értékes tudást halmozhatsz fel!</p>
+                    </div>
+
+                    <!-- Filter Tabs -->
+                    <div class="flex flex-wrap gap-1 bg-warm-100 p-1 rounded-2xl border border-warm-200 text-xs font-semibold">
+                        <button onclick="filterCategory('all')" class="cat-tab active px-3 py-1.5 rounded-xl text-white bg-emerald-600 transition shadow-sm">Összes</button>
+                        <button onclick="filterCategory('mind')" class="cat-tab px-3 py-1.5 rounded-xl text-gray-600 hover:text-gray-900 transition">Szellem</button>
+                        <button onclick="filterCategory('career')" class="cat-tab px-3 py-1.5 rounded-xl text-gray-600 hover:text-gray-900 transition">Szakma</button>
+                        <button onclick="filterCategory('health')" class="cat-tab px-3 py-1.5 rounded-xl text-gray-600 hover:text-gray-900 transition">Egészség</button>
+                    </div>
+                </div>
+
+                <!-- Cards Container -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="cards-container">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Chart Visualizer -->
+            <div class="glass-panel rounded-3xl p-6 space-y-4 shadow-sm border border-warm-200">
+                <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                    <h3 class="font-bold text-gray-900 text-base flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-5 h-5 text-emerald-600"></i>
+                        Időarányos Fejlődés Követése
+                    </h3>
+                    <span class="text-xs text-gray-500 font-medium">Megszerzett órák növekedése</span>
+                </div>
+                
+                <div class="relative h-60 w-full">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+<footer class="border-t border-warm-200/80 bg-white py-8 mt-12 text-center text-xs text-gray-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-2">
+            <div class="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg">
+                <i data-lucide="heart" class="w-4 h-4"></i>
+            </div>
+            <span class="font-semibold text-gray-700">Képernyőből Élet — Értékes Évekért</span>
+        </div>
+        <p>© 2026 Minden jog fenntartva. Tervezd meg a saját idődet tudatosan.</p>
+    </div>
+</footer>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+    <span id="toast-message" class="text-sm font-semibold">Összefoglaló a vágólapra másolva!</span>
+</div>
+
+<script>
+
+// Global State
+let state = {
+    age: 28,
+    screenTime: 3.5,
+    conversionRate: 80,
+    timeHorizon: '1',
+    categoryFilter: 'all'
+};
+
+// Target Skills Definition
+const SKILL_DEFINITIONS = [
+    {
+        id: 'languages',
+        title: 'Nyelvtanulás (B2/C1 Szint)',
+        category: 'mind',
+        icon: 'languages',
+        color: 'text-teal-600',
+        bgColor: 'bg-teal-50',
+        borderColor: 'border-teal-200',
+        hoursPerUnit: 600,
+        calculate: (hours) => {
+            const count = (hours / 600).toFixed(1);
+            return `Már <strong>${count} új nyelvet</strong> sajátíthatsz el magas szinten (pl. Angol, Spanyol vagy Német).`;
+        }
+    },
+    {
+        id: 'career',
+        title: 'Új Szakma / Karrierváltás',
+        category: 'career',
+        icon: 'briefcase',
+        color: 'text-emerald-600',
+        bgColor: 'bg-emerald-50',
+        borderColor: 'border-emerald-200',
+        hoursPerUnit: 1000,
+        calculate: (hours) => {
+            const count = (hours / 1000).toFixed(1);
+            if (hours < 400) {
+                return `Elmélyülhetsz egy teljesen új terület alapjaiban (Webfejlesztés, Grafika, Marketing).`;
+            }
+            return `Már <strong>${count}x junior karrierváltáshoz</strong> szükséges komplett tudást halmozhatsz fel.`;
+        }
+    },
+    {
+        id: 'reading',
+        title: 'Könyvolvasás & Műveltség',
+        category: 'mind',
+        icon: 'book-open',
+        color: 'text-amber-600',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-200',
+        hoursPerUnit: 20,
+        calculate: (hours) => {
+            const books = Math.floor(hours / 20);
+            return `Elolvashatsz <strong>${books} darab</strong> tartalmas szakkönyvet vagy világirodalmi művet.`;
+        }
+    },
+    {
+        id: 'fitness',
+        title: 'Testedzés & Fittség',
+        category: 'health',
+        icon: 'activity',
+        color: 'text-coral-600',
+        bgColor: 'bg-coral-400/10',
+        borderColor: 'border-coral-400/20',
+        hoursPerUnit: 1,
+        calculate: (hours) => {
+            const calories = Math.round(hours * 450);
+            const km = Math.round(hours * 8.5);
+            return `Elégethetsz <strong>${calories.toLocaleString('hu-HU')} kcal-t</strong>, vagy lefuthatsz <strong>${km.toLocaleString('hu-HU')} km-t</strong>.`;
+        }
+    },
+    {
+        id: 'music',
+        title: 'Hangszeres Tudás',
+        category: 'mind',
+        icon: 'music',
+        color: 'text-indigo-600',
+        bgColor: 'bg-indigo-50',
+        borderColor: 'border-indigo-200',
+        hoursPerUnit: 500,
+        calculate: (hours) => {
+            if (hours < 150) return `Megtanulhatod kedvenc dalaidat gitáron vagy zongorán kísérni.`;
+            const count = (hours / 500).toFixed(1);
+            return `<strong>${count}x haladó szintű</strong> hangszeres virtuóz tudást szerezhetsz meg.`;
+        }
+    },
+    {
+        id: 'business',
+        title: 'Saját Vállalkozás / Projekt',
+        category: 'career',
+        icon: 'rocket',
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50',
+        borderColor: 'border-purple-200',
+        hoursPerUnit: 600,
+        calculate: (hours) => {
+            const proj = (hours / 600).toFixed(1);
+            return `Létrehozhatsz és felfuttathatsz <strong>${proj}x működő mellékállású vállalkozást</strong> vagy saját márkát.`;
+        }
+    },
+    {
+        id: 'mindfulness',
+        title: 'Meditáció & Mentális Fókusz',
+        category: 'health',
+        icon: 'heart-pulse',
+        color: 'text-teal-600',
+        bgColor: 'bg-teal-50',
+        borderColor: 'border-teal-200',
+        hoursPerUnit: 1,
+        calculate: (hours) => {
+            const days = (hours / 24).toFixed(1);
+            return `<strong>${Math.round(hours)} órányi</strong> mély mentális feltöltődés és belső béke (${days} tiszta nap).`;
+        }
+    }
+];
+
+let growthChart = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+
+    // Inputs
+    document.getElementById('input-age').addEventListener('input', (e) => {
+        state.age = parseInt(e.target.value);
+        updateUI();
+    });
+
+    document.getElementById('input-screentime').addEventListener('input', (e) => {
+        state.screenTime = parseFloat(e.target.value);
+        updateUI();
+    });
+
+    document.getElementById('input-conversion').addEventListener('input', (e) => {
+        state.conversionRate = parseInt(e.target.value);
+        updateUI();
+    });
+
+    initChart();
+    updateUI();
+});
+
+function setAge(age) {
+    document.getElementById('input-age').value = age;
+    state.age = age;
+    updateUI();
+}
+
+function setScreenTime(time) {
+    document.getElementById('input-screentime').value = time;
+    state.screenTime = time;
+    updateUI();
+}
+
+function setTimeHorizon(horizon) {
+    state.timeHorizon = horizon;
+
+    document.querySelectorAll('#horizon-button-group .horizon-btn').forEach(btn => {
+        if (btn.getAttribute('data-years') === horizon) {
+            btn.className = "horizon-btn active p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/60 text-emerald-900 font-bold text-sm text-left flex justify-between items-center transition shadow-sm";
+            if (!btn.querySelector('i[data-lucide="check-circle-2"]')) {
+                const icon = document.createElement('i');
+                icon.setAttribute('data-lucide', 'check-circle-2');
+                icon.className = 'w-4 h-4 text-emerald-600';
+                btn.appendChild(icon);
+                lucide.createIcons();
+            }
+        } else {
+            btn.className = "horizon-btn p-3 rounded-2xl border border-gray-200 bg-white hover:bg-warm-100 text-gray-700 font-bold text-sm text-left flex justify-between items-center transition";
+            const icon = btn.querySelector('i[data-lucide="check-circle-2"]');
+            if (icon) icon.remove();
+        }
+    });
+
+    if (['5', '10', 'retire'].includes(horizon)) {
+        confetti({
+            particleCount: 30,
+            spread: 60,
+            origin: { y: 0.8 },
+            colors: ['#10b981', '#14b8a6', '#ff6b52']
+        });
+    }
+
+    updateUI();
+}
+
+function filterCategory(cat) {
+    state.categoryFilter = cat;
+    document.querySelectorAll('.cat-tab').forEach(btn => {
+        btn.classList.remove('active', 'bg-emerald-600', 'text-white');
+        btn.classList.add('text-gray-600');
+    });
+    event.target.classList.add('active', 'bg-emerald-600', 'text-white');
+    event.target.classList.remove('text-gray-600');
+    renderCards();
+}
+
+function calculateStats() {
+    const retirementAge = 65;
+    let yearsHorizon = 1;
+
+    if (state.timeHorizon === 'retire') {
+        yearsHorizon = Math.max(1, retirementAge - state.age);
+    } else {
+        yearsHorizon = parseFloat(state.timeHorizon);
+    }
+
+    const dailyWakingHours = 16; // 8 hours sleep
+    const totalScreenHours = state.screenTime * 365.25 * yearsHorizon;
+    const usefulHours = totalScreenHours * (state.conversionRate / 100);
+    const wakingPercent = ((state.screenTime / dailyWakingHours) * 100).toFixed(1);
+    const fullDaysLost = Math.round(totalScreenHours / 24);
+
+    return {
+        yearsHorizon,
+        totalScreenHours,
+        usefulHours,
+        wakingPercent,
+        fullDaysLost,
+        yearsUntilRetire: Math.max(0, retirementAge - state.age)
+    };
+}
+
+function updateUI() {
+    const stats = calculateStats();
+
+    // Display updates
+    document.getElementById('display-age').innerText = `${state.age} év`;
+    document.getElementById('display-screentime').innerText = `${state.screenTime} óra`;
+    document.getElementById('display-conversion').innerText = `${state.conversionRate}%`;
+
+    document.getElementById('retire-years-label').innerText = `65 éves korig (${stats.yearsUntilRetire} év)`;
+
+    document.getElementById('stat-waking-percent').innerText = `${stats.wakingPercent}%`;
+    document.getElementById('bar-waking-percent').style.width = `${Math.min(100, stats.wakingPercent)}%`;
+
+    const horizonMap = {
+        '1': '1 év',
+        '2': '2 év',
+        '5': '5 év',
+        '10': '10 év',
+        'retire': `${stats.yearsHorizon} év (nyugdíjig)`
+    };
+
+    document.getElementById('stat-years-text').innerText = horizonMap[state.timeHorizon];
+    document.getElementById('stat-total-hours').innerText = Math.round(stats.totalScreenHours).toLocaleString('hu-HU');
+    document.getElementById('stat-full-days').innerText = stats.fullDaysLost.toLocaleString('hu-HU');
+
+    document.getElementById('kpi-useful-hours').innerText = `${Math.round(stats.usefulHours).toLocaleString('hu-HU')} óra`;
+    document.getElementById('kpi-skills-count').innerText = `${(stats.usefulHours / 1000).toFixed(1)} Szakma`;
+    document.getElementById('kpi-books-count').innerText = `${Math.floor(stats.usefulHours / 20)} könyv`;
+
+    generateWrittenNarrative(stats);
+    renderCards();
+    updateChart();
+}
+
+function generateWrittenNarrative(stats) {
+    const container = document.getElementById('narrative-content');
+    
+    const formattedHours = Math.round(stats.usefulHours).toLocaleString('hu-HU');
+    const formattedDays = stats.fullDaysLost.toLocaleString('hu-HU');
+    const books = Math.floor(stats.usefulHours / 20);
+    const languages = (stats.usefulHours / 600).toFixed(1);
+    const years = stats.yearsHorizon;
+
+    let lifeStageText = "";
+    if (state.age < 22) {
+        lifeStageText = "fiatal felnőttként a legértékesebb alapozó éveidben jársz";
+    } else if (state.age < 35) {
+        lifeStageText = "karriered és egyéni kibontakozásod legaktívabb évtizedében vagy";
+    } else if (state.age < 50) {
+        lifeStageText = "tapasztalt felnőttként a fókusz és a minőségi idő a legnagyobb értéked";
+    } else {
+        lifeStageText = "bölcs életszakaszban a saját kiteljesedésedre fordított idő a legszebb ajándék";
+    }
+
+    container.innerHTML = `
+        <p class="text-base font-medium text-gray-800">
+            <strong>${state.age} évesen</strong>, ${lifeStageText}. Ha a következő <strong>${years} évben</strong> a napi <strong>${state.screenTime} óra</strong> céltalan görgetésed <strong>${state.conversionRate}%-át</strong> értékes tevékenységekre fordítod, akkor pontosan <span class="bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-md">${formattedHours} tiszta órát</span> nyersz vissza az életedből!
+        </p>
+
+        <p>
+            Ez a felszabadított idő nem kevesebb, mint <strong class="text-gray-900">${formattedDays} teljes, 24 órás napnak</strong> felel meg, amit megszakítás nélkül tölthetnél el fejlődéssel! Ahelyett, hogy mások tartalmát néznéd, ezen idő alatt elolvashatnál <strong class="text-emerald-700">${books} szakkönyvet</strong>, elsajátíthatnál <strong class="text-emerald-700">${languages} új nyelvet</strong>, vagy felépíthetnél egy saját vállalkozást.
+        </p>
+
+        <p class="italic bg-white p-3.5 rounded-2xl border border-emerald-100 text-gray-600 shadow-sm">
+            „Nem az idő hiányzik a céljaidhoz, hanem a figyelem. Kis napi változtatásokkal a következő ${years} évben egy teljesen új, magabiztosabb és képzettebb önmagadat építheted fel.”
+        </p>
+    `;
+}
+
+function renderCards() {
+    const stats = calculateStats();
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '';
+
+    const filtered = SKILL_DEFINITIONS.filter(s => state.categoryFilter === 'all' || s.category === state.categoryFilter);
+
+    filtered.forEach(skill => {
+        const resultText = skill.calculate(stats.usefulHours);
+
+        const cardHtml = `
+            <div class="glass-card p-5 rounded-2xl border ${skill.borderColor} space-y-3 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="p-2 rounded-xl ${skill.bgColor} ${skill.color}">
+                            <i data-lucide="${skill.icon}" class="w-5 h-5"></i>
+                        </span>
+                        <span class="text-[10px] font-extrabold px-2.5 py-1 rounded-full ${skill.bgColor} ${skill.color} uppercase tracking-wider">
+                            ${skill.category}
+                        </span>
+                    </div>
+                    <h4 class="font-bold text-gray-900 text-base">${skill.title}</h4>
+                    <p class="text-xs text-gray-600 mt-2 leading-relaxed">${resultText}</p>
+                </div>
+
+                <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 font-medium">
+                    <span>Megnyert időarány:</span>
+                    <span class="font-bold text-gray-900">${Math.round(stats.usefulHours)} / ${skill.hoursPerUnit} óra</span>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', cardHtml);
+    });
+
+    lucide.createIcons();
+}
+
+function initChart() {
+    const ctx = document.getElementById('growthChart').getContext('2d');
+    
+    growthChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['1 Év', '2 Év', '5 Év', '10 Év'],
+            datasets: [
+                {
+                    label: 'Telefonozásra Pazarolt Órák',
+                    data: [0, 0, 0, 0],
+                    backgroundColor: 'rgba(255, 107, 82, 0.7)',
+                    borderRadius: 8
+                },
+                {
+                    label: 'Megmentett Fejlődési Órák',
+                    data: [0, 0, 0, 0],
+                    backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                    borderRadius: 8
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' } }
+                }
+            },
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: 'rgba(0, 0, 0, 0.04)' } }
+            }
+        }
+    });
+}
+
+function updateChart() {
+    if (!growthChart) return;
+
+    const yearlyWasted = state.screenTime * 365.25;
+    const yearlyUseful = yearlyWasted * (state.conversionRate / 100);
+
+    const horizons = [1, 2, 5, 10];
+    growthChart.data.datasets[0].data = horizons.map(h => Math.round(yearlyWasted * h));
+    growthChart.data.datasets[1].data = horizons.map(h => Math.round(yearlyUseful * h));
+    growthChart.update();
+}
+
+function copySummaryText() {
+    const stats = calculateStats();
+    const text = `Képernyőből Élet Kalkuláció: ${state.age} évesen, napi ${state.screenTime} óra görgetés helyett ${stats.yearsHorizon} év alatt ${Math.round(stats.usefulHours).toLocaleString('hu-HU')} órányi hasznos időt nyerhetek vissza! Ez ${Math.floor(stats.usefulHours / 20)} elolvasott könyvnek felel meg. Próbáld ki te is!`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("Összefoglaló a vágólapra másolva!");
+    }).catch(() => {
+        showToast("Sikertelen másolás.");
+    });
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-message').innerText = msg;
+    toast.classList.remove('translate-y-20', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+    }, 3500);
+}
+</script>
+</body>
+</html>
